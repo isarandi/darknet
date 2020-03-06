@@ -12,7 +12,7 @@ if [[ -d $DESTINATION ]]; then
 fi
 
 find "$IMG_ROOT" -name '*.jpg' \
- | sort
+ | sort \
  | parallel --jobs $NJOBS -N1 --round-robin --roundrobin --pipe \
     "$DARKNET_DIR/darknet" detect "$DARKNET_DIR/cfg/yolov3-spp.cfg" "$DARKNET_DIR/yolov3-spp.weights" -thresh 0.1 \
     '>>' "${DESTINATION}{%}.txt"
