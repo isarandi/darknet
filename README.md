@@ -1,8 +1,11 @@
-![Darknet Logo](http://pjreddie.com/media/files/darknet-black-small.png)
+This is a small fork of Darknet.
 
-# Darknet #
-Darknet is an open source neural network framework written in C and CUDA. It is fast, easy to install, and supports CPU and GPU computation.
+Darknet is an open source neural network framework written in C and CUDA by Joseph Redmon. For more info see http://pjreddie.com/darknet and https://github.com/pjreddie/darknet.
 
-For more information see the [Darknet project website](http://pjreddie.com/darknet).
+This fork changes the following:
 
-For questions or issues please use the [Google Group](https://groups.google.com/forum/#!forum/darknet).
+* No images with bounding boxes are generated
+* The bounding box coordinates are written to standard output
+* The confidence is printed as a float with 3 decimals, not as an integer.
+* A run_yolo.sh script to make it easier to generate boxes for all images within a directory tree.
+* A script that parses the standard output of this patched darknet and collects person detections in a Python dictionary and saves it in Pickle format.
