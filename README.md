@@ -9,3 +9,5 @@ This fork changes the following:
 * The confidence is printed as a float with 3 decimals, not as an integer.
 * A run_yolo.sh script to make it easier to generate boxes for all images within a directory tree.
 * A script that parses the standard output of this patched darknet and collects person detections in a Python dictionary and saves it in Pickle format.
+
+Fork by István Sárándi, RWTH Aachen University.
