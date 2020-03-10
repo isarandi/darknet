@@ -10,4 +10,13 @@ This fork changes the following:
 * A run_yolo.sh script to make it easier to generate boxes for all images within a directory tree.
 * A script called boxes_to_pickle.py that parses the standard output of this patched darknet and collects person detections in a Python dictionary and saves it in Pickle format.
 
+Usage:
+
+```
+git clone https://github.com/isarandi/darknet.git
+cd darknet
+wget https://pjreddie.com/media/files/yolov3-spp.weights
+./run_yolo.sh --image-root some/path/with/images --out-path some/target/path.pkl --jobs 3
+```
+
 Fork by István Sárándi, RWTH Aachen University.
