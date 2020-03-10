@@ -22,7 +22,7 @@ import logging
 import os.path
 import re
 import sys
-
+import pickle
 import numpy as np
 
 
@@ -34,20 +34,15 @@ def main():
 
     detections_per_image = {}
 
-    if flags.relpath_components == 'auto':
+    if flags.relpath_components != 'auto':
+        flags.relpath_components = int(flags.relpath_components)
+    elif not flags.root_dir:
         matches = re.finditer(IMAGE_REGEX, darknet_output_text, flags=re.MULTILINE | re.DOTALL)
         paths = [m['path'] for m in matches]
-        prefix = os.path.commonprefix(paths)
-        n_components = os.path.relpath(paths[0], prefix).split('/')
-        if not all(os.path.relpath(p, prefix).split('/') == n_components for p in paths):
-            raise Exception
-
-        flags.relpath_components = n_components
-    else:
-        flags.relpath_components = int(flags.relpath_components)
+        flags.root_dir = os.path.commonprefix(paths)
 
     for m_image in re.finditer(IMAGE_REGEX, darknet_output_text, flags=re.MULTILINE | re.DOTALL):
-        relative_image_path = last_path_components(m_image['path'], flags.relpath_components)
+        relative_image_path = get_relpath(m_image['path'], flags)
         detections_per_image[relative_image_path] = []
 
         for m_object in re.finditer(OBJECT_REGEX, m_image['objects'], flags=re.MULTILINE):
@@ -76,6 +71,12 @@ def main():
         pickle.dump(detections_per_image, f, protocol=pickle.HIGHEST_PROTOCOL)
 
 
+def get_relpath(p, flags):
+    if flags.root_dir:
+        return os.path.relpath(p, flags.root_dir)
+    return last_path_components(p, flags.relpath_components)
+
+
 def m_object_to_bbox(m_object):
     x1, y1, w, h = [int(x) for x in re.findall(r'\d+', m_object['coords'])]
     return np.array([x1, y1, w, h])
@@ -93,6 +94,7 @@ def initialize():
     parser.add_argument('--out-path', type=str, default=None)
     parser.add_argument('--loglevel', type=str, default='error')
     parser.add_argument('--relpath-components', default='auto')
+    parser.add_argument('--root-dir')
     flags = parser.parse_args()
     if flags.out_path is None:
         flags.out_path = flags.in_path.replace('.txt', '.pickle')
