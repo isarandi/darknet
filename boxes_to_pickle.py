@@ -20,9 +20,10 @@ confidence.
 import argparse
 import logging
 import os.path
+import pickle
 import re
 import sys
-import pickle
+
 import numpy as np
 
 
@@ -43,7 +44,7 @@ def main():
 
     for m_image in re.finditer(IMAGE_REGEX, darknet_output_text, flags=re.MULTILINE | re.DOTALL):
         relative_image_path = get_relpath(m_image['path'], flags)
-        detections_per_image[relative_image_path] = []
+        detections_per_image.setdefault(relative_image_path, [])
 
         for m_object in re.finditer(OBJECT_REGEX, m_image['objects'], flags=re.MULTILINE):
             if m_object is None:
@@ -60,9 +61,15 @@ def main():
                     detections_per_image[relative_image_path].append(bbox_with_confidence)
 
         if not detections_per_image[relative_image_path]:
-            logging.warning(f'No detections in {relative_image_path}')
+            logging.warning(f'No detections for {relative_image_path}, {m_image["path"]}')
+
+    for relative_image_path, detections in detections_per_image.items():
+        if not detections:
+            logging.warning(f'No detections for {relative_image_path}')
 
     logging.info(f'Number of images: {len(detections_per_image)}')
+    n_images_without_detections = len([1 for x in detections_per_image.values() if not x])
+    logging.info(f'Number of images without detections: {n_images_without_detections}')
     n_detections = sum(len(v) for v in detections_per_image.values())
     logging.info(f'Total number of detections: {n_detections}')
     logging.info(f'Saving file to {flags.out_path}')
@@ -117,7 +124,7 @@ def last_path_components(path, n_components):
     return os.path.sep.join(components[-n_components:])
 
 
-IMAGE_REGEX = r"""Enter Image Path: (?P<path>.+?): Predicted in .+? seconds\.
+IMAGE_REGEX = r"""(Enter Image Path: )*Enter Image Path: (?P<path>.+?): Predicted in .+? seconds\.
 (?P<objects>.*?)(?=Enter)"""
 OBJECT_REGEX = r"""(?P<classes>(?:.+?: .+?%
 )+)Box \(LTWH\): (?P<coords>.+?)
