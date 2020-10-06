@@ -291,7 +291,7 @@ void validate_coco_recall(char *cfgfile, char *weightfile)
     }
 }
 
-void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
+void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh, int hflip)
 {
     image **alphabet = load_alphabet();
     network *net = load_network(cfgfile, weightfile, 0);
@@ -323,7 +323,7 @@ void test_coco(char *cfgfile, char *weightfile, char *filename, float thresh)
         detection *dets = get_network_boxes(net, 1, 1, thresh, 0, 0, 0, &nboxes);
         if (nms) do_nms_sort(dets, l.side*l.side*l.n, l.classes, nms);
 
-        draw_detections(im, dets, l.side*l.side*l.n, thresh, coco_classes, alphabet, 80);
+        draw_detections(im, dets, l.side*l.side*l.n, thresh, coco_classes, alphabet, 80, hflip);
         save_image(im, "prediction");
         show_image(im, "predictions", 0);
         free_detections(dets, nboxes);
@@ -339,6 +339,7 @@ void run_coco(int argc, char **argv)
     float thresh = find_float_arg(argc, argv, "-thresh", .2);
     int cam_index = find_int_arg(argc, argv, "-c", 0);
     int frame_skip = find_int_arg(argc, argv, "-s", 0);
+    int hflip = find_int_arg(argc, argv, "-hflip", 0);
 
     if(argc < 4){
         fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
@@ -349,7 +350,7 @@ void run_coco(int argc, char **argv)
     char *weights = (argc > 4) ? argv[4] : 0;
     char *filename = (argc > 5) ? argv[5]: 0;
     int avg = find_int_arg(argc, argv, "-avg", 1);
-    if(0==strcmp(argv[2], "test")) test_coco(cfg, weights, filename, thresh);
+    if(0==strcmp(argv[2], "test")) test_coco(cfg, weights, filename, thresh, hflip);
     else if(0==strcmp(argv[2], "train")) train_coco(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_coco(cfg, weights);
     else if(0==strcmp(argv[2], "recall")) validate_coco_recall(cfg, weights);

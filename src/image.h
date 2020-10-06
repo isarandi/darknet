@@ -43,6 +43,7 @@ void rgb_to_hsv(image im);
 void hsv_to_rgb(image im);
 void yuv_to_rgb(image im);
 void rgb_to_yuv(image im);
+image ndarray_to_image(unsigned char* src, long* shape, long* strides);
 
 
 image collapse_image_layers(image source, int border);

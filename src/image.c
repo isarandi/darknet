@@ -236,7 +236,7 @@ image **load_alphabet()
     return alphabets;
 }
 
-void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes)
+void draw_detections(image im, detection *dets, int num, float thresh, char **names, image **alphabet, int classes, int hflip)
 {
     int i,j;
 
@@ -289,7 +289,11 @@ void draw_detections(image im, detection *dets, int num, float thresh, char **na
             if(right > im.w-1) right = im.w-1;
             if(top < 0) top = 0;
             if(bot > im.h-1) bot = im.h-1;
-
+            if (hflip) {
+                int right_ = im.w - left;
+                left = im.w - right;
+                right = right_;
+            }
             printf("Box (LTWH): %d,%d,%d,%d\n", left, top, right-left, bot-top);
         }
     }
@@ -1487,4 +1491,33 @@ void free_image(image m)
     if(m.data){
         free(m.data);
     }
+}
+image ndarray_to_image(unsigned char* src, long* shape, long* strides)
+{
+    int h = shape[0];
+    int w = shape[1];
+    int c = shape[2];
+    int step_h = strides[0];
+    int step_w = strides[1];
+    int step_c = strides[2];
+    image im = make_image(w, h, c);
+    int i, j, k;
+    int index1, index2 = 0;
+
+    for(i = 0; i < h; ++i){
+            for(k= 0; k < c; ++k){
+                for(j = 0; j < w; ++j){
+
+                    index1 = k*w*h + i*w + j;
+                    index2 = step_h*i + step_w*j + step_c*k;
+                    //fprintf(stderr, w=%d h=%d c=%d step_w=%d step_h=%d step_c=%d n, w, h, c, step_w, step_h, step_c);
+                    //fprintf(stderr, im.data[%d]=%u data[%d]=%f n, index1, src[index2], index2, src[index2]/255.);
+                    im.data[index1] = src[index2]/255.;
+                }
+            }
+        }
+
+    rgbgr_image(im);
+
+    return im;
 }
