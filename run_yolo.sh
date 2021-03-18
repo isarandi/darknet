@@ -5,12 +5,14 @@ HFLIP=0
 while [[ "$#" -gt 0 ]]; do case $1 in
   --image-root=*) IMG_ROOT="${1#*=}";;
   --image-root) IMG_ROOT=$2; shift;;
+  --image-paths-file=*) IMG_PATHS_FILE="${1#*=}";;
+  --image-paths-file) IMG_PATHS_FILE=$2; shift;;
   --out-path=*) DESTINATION="${1#*=}";;
   --out-path) DESTINATION=$2; shift;;
   --jobs=*) NJOBS="${1#*=}";;
   --jobs) NJOBS=$2; shift;;
   --hflip) HFLIP=1;;
-  --image-root|--out-path|--jobs) echo "$1 requires an argument" >&2; exit 1;;
+  --image-paths-file|--image-root|--out-path|--jobs) echo "$1 requires an argument" >&2; exit 1;;
   *) echo "Unknown parameter passed: $1"; exit 1;;
 esac; shift; done
 
@@ -19,10 +21,17 @@ if [[ -d $DESTINATION ]]; then
     exit 1
 fi
 
-find "$IMG_ROOT" -name '*.jpg' | sort \
+if [[ -f $IMG_PATHS_FILE ]]; then
+    image_paths=$(cat "$IMG_PATHS_FILE")
+else
+    image_paths=$(find "$IMG_ROOT" -name '*.jpg')
+fi
+
+
+echo "$image_paths" | sort \
  | parallel --verbose --jobs "$NJOBS" -N1 --round-robin --pipe \
     ./darknet detect ./cfg/yolov3-spp.cfg ./yolov3-spp.weights -hflip "$HFLIP" -thresh 0.1 '>>' "${DESTINATION}.raw_${HFLIP}_{%}"
 
 cat "${DESTINATION}.raw_"* > "${DESTINATION}.raw"
-#rm "${DESTINATION}.raw_"*
+rm "${DESTINATION}.raw_"*
 ./boxes_to_pickle.py --in-path "$DESTINATION.raw" --out-path="$DESTINATION" --root-dir="$IMG_ROOT" --loglevel=info
